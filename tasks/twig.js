@@ -54,7 +54,7 @@ module.exports = function(grunt) {
 
       // Provide an AMD wrapper if requested.
       if (options.amd_wrapper) {
-        src = 'require(["twig"], function(Twig) {\n' + src + '});\n';
+        src = 'define(["twig"], function(Twig) {\n' + src + '});\n';
       }
 
       // Write the destination file.
