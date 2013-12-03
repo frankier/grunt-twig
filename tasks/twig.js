@@ -11,6 +11,7 @@
 module.exports = function(grunt) {
   grunt.registerMultiTask('twig', 'Compile and concatenate Twig templates.', function() {
     var Twig = require('twig');
+    var path = require('path');
 
     // Merge task-specific and/or target-specific options with these defaults.
     // We use Twig templates to define the output format of your compiled Twig
@@ -34,22 +35,14 @@ module.exports = function(grunt) {
     // Iterate over all specified file groups.
     this.files.forEach(function(f) {
       // Concat specified files.
-      var src = f.src.filter(function(filepath) {
-        // Warn on and remove invalid source files.
-        if (options.base_dir) {
-            filepath = path.resolve(options.base_dir, filepath);
-        }
-        if (!grunt.file.exists(filepath)) {
-          grunt.log.warn('Source file "' + filepath + '" not found.');
-          return false;
-        }
-        return true;
-      }).map(function(filepath) {
+      var src = f.src.map(function(filepath) {
         // Read file source and run it through Twig's almost-compiler, which
         // produces an object that can be used to render the template.
         var fullpath;
         if (options.base_dir) {
             fullpath = path.resolve(options.base_dir, filepath);
+        } else {
+            fullpath = filepath;
         }
         var source = grunt.file.read(fullpath);
 
@@ -60,7 +53,7 @@ module.exports = function(grunt) {
       }).join(grunt.util.normalizelf(options.separator));
 
       // Apply overall template.
-      src = options.template.render({ variable: options.variable, templates: src });
+      src = options.template.render({ templates: src });
 
       // Always provide a AMD wrapper
       src = 'define(["twig"], function(Twig) {\n' + src + '});\n';
