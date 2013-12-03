@@ -37,13 +37,7 @@ module.exports = function(grunt) {
       var src = f.src.map(function(filepath) {
         // Read file source and run it through Twig's almost-compiler, which
         // produces an object that can be used to render the template.
-        var fullpath;
-        if (options.base_dir) {
-            fullpath = path.resolve(options.base_dir, filepath);
-        } else {
-            fullpath = filepath;
-        }
-        var source = grunt.file.read(fullpath);
+        var source = grunt.file.read(filepath);
 
         return options.each_template.render({
           filepath: filepath,
