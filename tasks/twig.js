@@ -17,10 +17,14 @@ module.exports = function(grunt) {
     // templates. (Because we heard you like Twig templates.)
     var options = this.options({
       amd_wrapper: true,
-      variable: 'window.JST',
       separator: '\n',
-      template: '{{ variable }} = {{ variable }} || {};\n{{ templates }}\n',
-      each_template: '{{ variable }}["{{ filepath }}"] = Twig.twig({ data: {{ compiled }} });'
+      template: 'var templates = {};\n{{ templates }}\nreturn templates;',
+      each_template: ['templates["{{ filepath }}"] = Twig.twig({',
+                      '    data: {{ compiled }},',
+                      '    id: "{{ filepath }}",',
+                      '    options: { allowInlineIncludes: true }',
+                      '});',
+                      'Twig.Templates.save(templates["{{ filepath }}"]);'].join('\n')
     });
 
     // Compile *our* templates.
@@ -32,6 +36,9 @@ module.exports = function(grunt) {
       // Concat specified files.
       var src = f.src.filter(function(filepath) {
         // Warn on and remove invalid source files.
+        if (options.base_dir) {
+            filepath = path.resolve(options.base_dir, filepath);
+        }
         if (!grunt.file.exists(filepath)) {
           grunt.log.warn('Source file "' + filepath + '" not found.');
           return false;
@@ -40,10 +47,13 @@ module.exports = function(grunt) {
       }).map(function(filepath) {
         // Read file source and run it through Twig's almost-compiler, which
         // produces an object that can be used to render the template.
-        var source = grunt.file.read(filepath);
+        var fullpath;
+        if (options.base_dir) {
+            fullpath = path.resolve(options.base_dir, filepath);
+        }
+        var source = grunt.file.read(fullpath);
 
         return options.each_template.render({
-          variable: options.variable,
           filepath: filepath,
           compiled: JSON.stringify(Twig.twig({ data: source }).tokens),
         });
@@ -52,10 +62,8 @@ module.exports = function(grunt) {
       // Apply overall template.
       src = options.template.render({ variable: options.variable, templates: src });
 
-      // Provide an AMD wrapper if requested.
-      if (options.amd_wrapper) {
-        src = 'define(["twig"], function(Twig) {\n' + src + '});\n';
-      }
+      // Always provide a AMD wrapper
+      src = 'define(["twig"], function(Twig) {\n' + src + '});\n';
 
       // Write the destination file.
       grunt.file.write(f.dest, src);
