@@ -24,8 +24,7 @@ module.exports = function(grunt) {
                       '    data: {{ compiled }},',
                       '    id: "{{ filepath }}",',
                       '    options: { allowInlineIncludes: true }',
-                      '});',
-                      'Twig.Templates.save(templates["{{ filepath }}"]);'].join('\n')
+                      '});\n'].join('\n')
     });
 
     // Compile *our* templates.
